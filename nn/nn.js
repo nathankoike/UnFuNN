@@ -12,13 +12,13 @@ function sigmoid(value) {
 // Input: an array of Numbers
 // Returns an array of the dot product of every node run through the sigmoid fn
 function activateLayer(layer, input) {
-  return layer.map(node => {
+  return layer.map(node =>
     sigmoid(
       node
         .map((weight, i) => weight * input[i]) // node[i] * input[i]
         .reduce((prev, curr) => prev + curr) // Sum for dot product
-    );
-  });
+    )
+  );
 }
 
 // Layers: an array of arrays of arrays of weights
@@ -28,7 +28,9 @@ function activateLayer(layer, input) {
 //  Input: an array of size n, where n is the size of a node in the first layer
 // Returns the activation result of the final layer
 function unfunn(layers, input) {
-  return [];
+  return layers.length
+    ? unfunn(layers.slice(1), activateLayer(layers[0], input))
+    : input;
 }
 
-console.log(sigmoid(9));
+console.log(unfunn([[[0.5, 0.5]]], [3, 5]));
