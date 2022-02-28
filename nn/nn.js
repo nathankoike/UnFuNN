@@ -1,7 +1,7 @@
 const alpha = 0.5; // Just some constant alpha, changing this does stuff
 const maxEpochs = 1000; // The most training cycles that can be done in one shot
 
-// Value: the Number to run through the function
+// value: the Number to run through the function
 // Returns a Number
 function sigmoid(value) {
   try {
@@ -11,8 +11,8 @@ function sigmoid(value) {
   }
 }
 
-// Layer: an array of arrays of Numbers, where each subarray is a node
-// Input: an array of Numbers
+// layer: an array of arrays of Numbers, where each subarray is a node
+// input: an array of Numbers
 // Returns an array of the dot product of every node run through the sigmoid fn
 function activateLayer(layer, input) {
   return layer.map(node =>
@@ -24,11 +24,11 @@ function activateLayer(layer, input) {
   );
 }
 
-// Layers: an array of arrays of arrays of weights
+// layers: an array of arrays of arrays of weights
 //         [layer1, layer2, ..., layer_n], where each layer is an array of nodes
 //         [node1, node2, ..., node_m], where each node is an array of weights
 //         [weight1, weight2, ..., weight_i], where each weight is a Number
-//  Input: an array of size n, where n is the size of a node in the first layer
+//  input: an array of size n, where n is the size of a node in the first layer
 // Returns the activation result of the final layer
 function unfunn(layers, input) {
   return layers.length
@@ -36,10 +36,11 @@ function unfunn(layers, input) {
     : input;
 }
 
-// NeuralNetwork: the neural net we want to train
-//  DeltaNetwork: delta values with the same structure as NeuralNetwork
+// neuralNetwork: the neural net we want to train
+//  deltaNetwork: delta values with the same structure as NeuralNetwork
 //                [layer1Deltas, layer2Deltas, ..., layer_nDeltas]
 //                [node1Delta, node2Delta, ..., node_mDelta]
+//       Returns: a neural network that has been tuned by the delta network
 function update(neuralNetwork, deltaNetwork) {
   // These are in reverse order, so we need to flip them
   neuralNetwork.reverse();
@@ -60,12 +61,15 @@ function update(neuralNetwork, deltaNetwork) {
   );
 }
 
-//       NN: the neural network we want to train
-//   Result: the result of our neural network
-// Expected: the actual answer
+//       nn: the neural network we want to train
+//   result: the result of our neural network
+// expected: the actual answer
+//  Returns: a neural network that has been modified by back propagation on a
+//           single training case
 function backprop(nn, result, expected) {
   nn.reverse(); // Output layer first
 
+  // The deltas of every node in every layer
   let deltaNetwork = [];
 
   nn.forEach((layer, i) => {
@@ -97,9 +101,10 @@ function backprop(nn, result, expected) {
   return update(nn, deltaNetwork);
 }
 
-//      NN: an unnecessarily functional neural network
-//  Epochs: the number of loops to perform
-//    Data: the test data set; each entry is in the form [input, output]
+//      nn: an unnecessarily functional neural network
+//    data: the test data set; each entry is in the form [input, output]
+//  epochs: the number of loops to perform
+// Returns: a trained neural network of the same form as the input network
 function train(nn, data, epochs) {
   if (epochs > maxEpochs) epochs = maxEpochs;
   if (epochs < 1) return nn; // Base case
@@ -112,13 +117,33 @@ function train(nn, data, epochs) {
   return train(nn, data, --epochs); // Loop
 }
 
-let nn = [[[0, 1], [1, 0]], [[0, 0], [0, 0], [0, 0]], [[0, 0, 0]]];
-let test = [[[3, 5], [1]]];
+let nn = [[[0, 1], [0, 1]], [[1, 1]]];
+let test = [
+  [[0, 1], [1]],
+  [[1, 0], [0]],
+  [[2, 1], [1]],
+  [[2, 0], [0]],
+  [[3, 1], [1]],
+  [[3, 0], [0]],
+  [[4, 1], [1]],
+  [[4, 0], [0]],
+  [[5, 1], [1]],
+  [[5, 0], [0]],
+  [[6, 1], [1]],
+  [[6, 0], [0]]
+];
 
-// trained network
-trained = train(nn, test, 10000);
+let trained = nn;
 
-// result from training
-// console.log(trained);
+for (let epo = 0; epo < 101; epo++) {
+  if (!(epo % 10)) {
+    console.log(`Epoch: ${epo}`);
+    console.log(unfunn(trained, [0, 1]));
+    console.log(unfunn(trained, [1, 0]));
+    console.log();
+    console.log(trained);
+    console.log("\n\n\n");
+  }
 
-console.log(unfunn(trained, test[0][0]));
+  trained = train(trained, test, 1);
+}
