@@ -48,7 +48,7 @@ function update(neuralNetwork, deltaNetwork) {
   neuralNetwork.map((layer, i) =>
     layer.map((node, j) =>
       node.map((weight, k) => {
-        return weight + deltaNetwork[i][j][k] * (alpha + alpha * alpha);
+        return weight + deltaNetwork[i][j] * (alpha + alpha * alpha);
       })
     )
   );
@@ -66,21 +66,32 @@ function update(neuralNetwork, deltaNetwork) {
 function backprop(nn, result, expected) {
   nn.reverse(); // Output layer first
 
-  let deltaNetwork = nn.map((layer, i) => {
+  let deltaNetwork = [];
+
+  nn.forEach((layer, i) => {
     // Not output layer
     if (i) {
-      return layer.map(node =>
-        // Sums of products of weights and node delta
-        nn[i - 1].map((nextNode, j) => {
-          nextNode.reduce((prev, curr) => prev + curr * deltas[j]);
-        })
+      deltaNetwork.push(
+        layer.map(node =>
+          nn[i - 1]
+            .map((nextNode, j) =>
+              nextNode
+                .map(weight => weight * deltaNetwork[i - 1][j])
+                .reduce((prev, curr) => prev + curr)
+            )
+            .reduce((prev, curr) => prev + curr)
+        )
       );
     }
 
     // Output layer
-    return layer.map((node, j) => {
-      return result[j] * (1 - result[j]) * (expected[j] - result[j]);
-    });
+    else {
+      deltaNetwork.push(
+        layer.map((node, j) => {
+          return result[j] * (1 - result[j]) * (expected[j] - result[j]);
+        })
+      );
+    }
   });
 
   return update(nn, deltaNetwork);
@@ -101,20 +112,13 @@ function train(nn, data, epochs) {
   return train(nn, data, --epochs); // Loop
 }
 
-let nn = [[[0.5, 0.5]]];
+let nn = [[[0, 1], [1, 0]], [[0, 0], [0, 0], [0, 0]], [[0, 0, 0]]];
 let test = [[[3, 5], [1]]];
 
 // trained network
-trained = train(nn, [[[0, 0], [1]]], 2);
+trained = train(nn, test, 10000);
 
 // result from training
-console.log(trained);
+// console.log(trained);
 
-console.log(unfunn(trained, [0, 0]));
-
-// function maxDepth(i = 0) {
-//   console.log(i);
-//   maxDepth(i + 1);
-// }
-//
-// maxDepth();
+console.log(unfunn(trained, test[0][0]));
