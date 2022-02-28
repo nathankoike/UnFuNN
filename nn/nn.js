@@ -24,16 +24,14 @@ function activateLayer(layer, input) {
   );
 }
 
-// layers: an array of arrays of arrays of weights
+//     nn: an array of arrays of arrays of weights
 //         [layer1, layer2, ..., layer_n], where each layer is an array of nodes
 //         [node1, node2, ..., node_m], where each node is an array of weights
 //         [weight1, weight2, ..., weight_i], where each weight is a Number
 //  input: an array of size n, where n is the size of a node in the first layer
 // Returns the activation result of the final layer
-function unfunn(layers, input) {
-  return layers.length
-    ? unfunn(layers.slice(1), activateLayer(layers[0], input))
-    : input;
+function predict(nn, input) {
+  return nn.length ? predict(nn.slice(1), activateLayer(nn[0], input)) : input;
 }
 
 // neuralNetwork: the neural net we want to train
@@ -111,39 +109,38 @@ function train(nn, data, epochs) {
 
   // Update the weights in the NN for every training case
   data.forEach(([input, output]) => {
-    nn = backprop(nn, unfunn(nn, input), output);
+    nn = backprop(nn, predict(nn, input), output);
   });
 
   return train(nn, data, --epochs); // Loop
 }
 
-let nn = [[[0, 1], [0, 1]], [[1, 1]]];
-let test = [
-  [[0, 1], [1]],
-  [[1, 0], [0]],
-  [[2, 1], [1]],
-  [[2, 0], [0]],
-  [[3, 1], [1]],
-  [[3, 0], [0]],
-  [[4, 1], [1]],
-  [[4, 0], [0]],
-  [[5, 1], [1]],
-  [[5, 0], [0]],
-  [[6, 1], [1]],
-  [[6, 0], [0]]
-];
+//    layers: an array of integers where each entry is the number of nodes in a
+//            layer
+// inputSize: the number of inputs the neural network is expected to take
+//   Returns: a neural network as outlined in the predict function header
+function unfunn(inputSize, layers) {
+  return layers.map((nodes, i) => {
+    // The current layer being built
+    let layer = [];
 
-let trained = nn;
+    // Build all the nodes
+    for (; nodes; --nodes) {
+      let node = [];
 
-for (let epo = 0; epo < 101; epo++) {
-  if (!(epo % 10)) {
-    console.log(`Epoch: ${epo}`);
-    console.log(unfunn(trained, [0, 1]));
-    console.log(unfunn(trained, [1, 0]));
-    console.log();
-    console.log(trained);
-    console.log("\n\n\n");
-  }
+      // Assign a random value to each weight
+      for (let weights = i ? layers[i - 1] : inputSize; weights > 0; --weights)
+        node.push(Math.random());
 
-  trained = train(trained, test, 1);
+      layer.push(node);
+    }
+
+    return layer;
+  });
 }
+
+module.exports = {
+  train,
+  predict,
+  unfunn
+};
