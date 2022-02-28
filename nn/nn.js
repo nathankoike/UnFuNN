@@ -15,11 +15,11 @@ function sigmoid(value) {
 // input: an array of Numbers
 // Returns an array of the dot product of every node run through the sigmoid fn
 function activateLayer(layer, input) {
-  return layer.map(node =>
+  return layer.map(([weights], bias) =>
     sigmoid(
-      node
+      weights
         .map((weight, i) => weight * input[i]) // node[i] * input[i]
-        .reduce((prev, curr) => prev + curr) // Sum for dot product
+        .reduce((prev, curr) => prev + curr) + bias // Sum for dot product
     )
   );
 }
@@ -44,18 +44,21 @@ function update(neuralNetwork, deltaNetwork) {
   neuralNetwork.reverse();
   deltaNetwork.reverse();
 
-  neuralNetwork.map((layer, i) =>
-    layer.map((node, j) =>
-      node.map((weight, k) => {
-        return weight + deltaNetwork[i][j] * (alpha + alpha * alpha);
-      })
-    )
-  );
+  // neuralNetwork.map((layer, i) =>
+  //   layer.map((node, j) =>
+  //     node.map((weight, k) => {
+  //       return weight + deltaNetwork[i][j] * (alpha + alpha * alpha);
+  //     })
+  //   )
+  // );
 
   return neuralNetwork.map((layer, i) =>
-    layer.map((node, j) =>
-      node.map(weight => weight + deltaNetwork[i][j] * (alpha + alpha * alpha))
-    )
+    layer.map(([weights, bias], j) => [
+      weights.map(
+        weight => weight + deltaNetwork[i][j] * (alpha + alpha * alpha)
+      ),
+      bias + alpha * deltaNetwork[i][j]
+    ])
   );
 }
 
@@ -76,8 +79,8 @@ function backprop(nn, result, expected) {
       deltaNetwork.push(
         layer.map(node =>
           nn[i - 1]
-            .map((nextNode, j) =>
-              nextNode
+            .map(([nextWeights, bias], j) =>
+              nextWeights
                 .map(weight => weight * deltaNetwork[i - 1][j])
                 .reduce((prev, curr) => prev + curr)
             )
@@ -132,7 +135,7 @@ function unfunn(inputSize, layers) {
       for (let weights = i ? layers[i - 1] : inputSize; weights > 0; --weights)
         node.push(Math.random());
 
-      layer.push(node);
+      layer.push([node, alpha]);
     }
 
     return layer;
